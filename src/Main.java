@@ -24,60 +24,47 @@ public class Main {
         List<Order> orders = Arrays.asList(order1, order2, order3);
 
         System.out.println("**********ESERCIZIO1**********");
-        List<Product> booksOver100 = getBooksOver100Supplier(products).get();
-        System.out.println("Lista prodotti di categoria book con un prezzo > 100: " + booksOver100);
 
-        System.out.println("**********ESERCIZIO2**********");
-        List<Order> ordersWithBabyProducts = getOrdersWithBabyProductsSupplier(orders).get();
-        System.out.println("Lista prodotti della categoria baby: " + ordersWithBabyProducts);
-
-        System.out.println("**********ESERCIZIO3**********");
-        List<Product> discountedBoysProducts = getDiscountedBoysProductsSupplier(products).get();
-        System.out.println("Prodotti Boys con sconto del 10%: " + discountedBoysProducts);
-
-        System.out.println("**********ESERCIZIO4**********");
-        List<Product> tier2CustomerProducts = getTier2CustomerProductsSupplier(orders).get();
-        System.out.println("Prodotti ordinati da clienti di livello tier 2 tra 01-Feb-2021 e 01-Apr-2021: " + tier2CustomerProducts);
-
-    }
-
-    // Esercizio #1: Ottenere una lista di prodotti che appartengono
-    // alla categoria "Books" ed hanno un prezzo > 100
-    public static Supplier<List<Product>> getBooksOver100Supplier(List<Product> products) {
-        return () -> products.stream()
+        Supplier<List<Product>> booksOver100Supplier = () -> products.stream()
                 .filter(product -> "Books".equals(product.getCategory()) && product.getPrice() > 100)
                 .collect(Collectors.toList());
-    }
+        List<Product> booksOver100 = booksOver100Supplier.get();
+        System.out.println("Lista prodotti di categoria 'Books' con un prezzo > 100: " + booksOver100);
 
-    // Esercizio #2: Ottenere una lista di ordini con prodotti
-    // che appartengono alla categoria "Baby"
-    public static Supplier<List<Order>> getOrdersWithBabyProductsSupplier(List<Order> orders) {
-        return () -> orders.stream()
+        System.out.println("**********ESERCIZIO2**********");
+
+        Supplier<List<Order>> ordersWithBabyProductsSupplier = () -> orders.stream()
                 .filter(order -> order.getProducts().stream().anyMatch(product -> "Baby".equals(product.getCategory())))
                 .collect(Collectors.toList());
-    }
+        List<Order> ordersWithBabyProducts = ordersWithBabyProductsSupplier.get();
+        System.out.println("Lista ordini con prodotti della categoria 'Baby': " + ordersWithBabyProducts);
 
-    // Esercizio #3: Ottenere una lista di prodotti che appartengono
-    // alla categoria "Boys" ed applicare 10% di sconto al loro prezzo
-    public static Supplier<List<Product>> getDiscountedBoysProductsSupplier(List<Product> products) {
-        return () -> products.stream()
+        System.out.println("**********ESERCIZIO3**********");
+
+        Supplier<List<Product>> discountedBoysProductsSupplier = () -> products.stream()
                 .filter(product -> "Boys".equals(product.getCategory()))
                 .peek(product -> product.setPrice(product.getPrice() * 0.9))
                 .collect(Collectors.toList());
+        List<Product> discountedBoysProducts = discountedBoysProductsSupplier.get();
+        System.out.println("Prodotti 'Boys' con sconto del 10%: " + discountedBoysProducts);
+
+        System.out.println("**********ESERCIZIO4**********");
+        Supplier<List<Product>> tier2CustomerProductsSupplier = () -> {
+            LocalDate startDate = LocalDate.of(2021, 2, 1);
+            LocalDate endDate = LocalDate.of(2021, 4, 1);
+            return orders.stream()
+                    .filter(order -> order.getCustomer().getTier() == 2 &&
+                            (order.getOrderDate().isAfter(startDate) || order.getOrderDate().isEqual(startDate)) &&
+                            (order.getOrderDate().isBefore(endDate) || order.getOrderDate().isEqual(endDate)))
+                    .flatMap(order -> order.getProducts().stream())
+                    .collect(Collectors.toList());
+        };
+
+        List<Product> tier2CustomerProducts = tier2CustomerProductsSupplier.get();
+        System.out.println("Prodotti ordinati da clienti di livello tier 2 tra 01-Feb-2021 e 01-Apr-2021: " + tier2CustomerProducts);
+    }
+
     }
 
 
 
-    // Esercizio #4: Ottenere una lista di prodotti ordinati da clienti
-    // di livello (tier) 2 tra l'01-Feb-2021 e l'01-Apr-2021
-    public static Supplier<List<Product>> getTier2CustomerProductsSupplier(List<Order> orders) {
-        LocalDate startDate = LocalDate.of(2021, 2, 1);
-        LocalDate endDate = LocalDate.of(2021, 4, 1);
-        return () -> orders.stream()
-                .filter(order -> order.getCustomer().getTier() == 2 &&
-                        (order.getOrderDate().isAfter(startDate) || order.getOrderDate().isEqual(startDate)) &&
-                        (order.getOrderDate().isBefore(endDate) || order.getOrderDate().isEqual(endDate)))
-                .flatMap(order -> order.getProducts().stream())
-                .collect(Collectors.toList());
-    }
-}
